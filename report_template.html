@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Survey Data Cleaning Report</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 1em; }
+      table { border-collapse: collapse; width: 100%; margin-bottom: 1em; }
+      th, td { border: 1px solid #ccc; padding: 6px; }
+      th { background: #e7e7e7; }
+      .section { margin-bottom: 2em; }
+    </style>
+</head>
+<body>
+  <h1>Survey Data Cleaning Report</h1>
+  <div class="section">
+    <h2>Dataset Overview</h2>
+    <ul>
+      <li>Rows: {{ shape[0] }}</li>
+      <li>Columns: {{ shape[1] }}</li>
+    </ul>
+    <h3>Missing % per Column:</h3>
+    <table>
+      <tr><th>Column</th><th>Missing %</th></tr>
+      {% for col, pct in nulls.items() %}
+        <tr><td>{{col}}</td><td>{{pct}}%</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="section">
+    <h2>Cleaning Log</h2>
+    <ul>{% for step in log %}<li>{{ step }}</li>{% endfor %}</ul>
+  </div>
+  <div class="section">
+    <h2>Validation Log</h2>
+    <ul>{% for step in val_log %}<li>{{ step }}</li>{% endfor %}</ul>
+  </div>
+  <div class="section">
+    <h2>Estimates</h2>
+    <table>
+      <tr><th>Estimate</th><th>Unweighted</th><th>Weighted</th></tr>
+      {% for item in estimates %}
+        <tr>
+          <td>{{item.name}}</td>
+          <td>{{item.unweighted}}</td>
+          <td>{{item.weighted}}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="section">
+    <h2>Summary</h2>
+    <ul>
+      <li>Cleaned data rows: {{ cleaned_rows }}</li>
+      <li>Rows removed (outliers+rules): {{ removed_rows }}</li>
+    </ul>
+  </div>
+</body>
+</html>

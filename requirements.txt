@@ -1,0 +1,12 @@
+streamlit
+pandas
+numpy
+scipy
+statsmodels
+matplotlib
+seaborn
+plotly
+jinja2
+pdfkit
+weasyprint
+openpyxl
