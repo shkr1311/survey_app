@@ -13,5 +13,5 @@ A smart, modular Streamlit web app to **upload, clean, validate, and analyze** r
 - Generate downloadable reports (HTML, PDF)
 - Multilingual UI (English/Hindi)
 
-## How to Run
+
 
