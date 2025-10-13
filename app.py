@@ -733,3 +733,565 @@ if 'validated' in st.session_state:
 
     # Summary Charts
     st.subheader(t("summary_charts"))
+    
+    # Add this to your existing code - Replace the generate_html_report function and add report section
+
+# ==================== ENHANCED REPORT GENERATION ====================
+
+def generate_comprehensive_survey_report(context, df_cleaned, lang="English"):
+    """Generate comprehensive survey analysis report with visualizations"""
+    
+    # Calculate additional metrics
+    numeric_cols = df_cleaned.select_dtypes(include=[np.number]).columns.tolist()
+    categorical_cols = df_cleaned.select_dtypes(include=['object']).columns.tolist()
+    
+    # Response rate calculation
+    original_rows = context.get('original_rows', 0)
+    final_rows = context.get('cleaned_rows', 0)
+    retention_rate = (final_rows / original_rows * 100) if original_rows > 0 else 0
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="{'hi' if lang == 'Hindi' else 'en'}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Survey Data Analysis Report</title>
+        <style>
+            * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+            body {{ 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0; 
+                padding: 20px; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+            }}
+            .container {{ 
+                max-width: 1400px;
+                margin: 0 auto;
+                background: white; 
+                padding: 40px; 
+                border-radius: 12px; 
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            }}
+            .header {{
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 8px;
+                margin-bottom: 30px;
+            }}
+            h1 {{ 
+                font-size: 2.5em;
+                margin-bottom: 10px;
+            }}
+            .timestamp {{ 
+                font-size: 0.95em;
+                opacity: 0.9;
+            }}
+            h2 {{ 
+                color: #34495e; 
+                margin-top: 35px;
+                margin-bottom: 20px;
+                font-size: 1.8em;
+                border-left: 5px solid #667eea;
+                padding-left: 15px;
+            }}
+            h3 {{
+                color: #667eea;
+                margin-top: 25px;
+                margin-bottom: 15px;
+                font-size: 1.3em;
+            }}
+            .metric-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin: 20px 0;
+            }}
+            .metric-card {{
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                padding: 25px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                border-top: 4px solid #667eea;
+                text-align: center;
+            }}
+            .metric-card h3 {{
+                color: #667eea;
+                font-size: 0.9em;
+                margin-bottom: 10px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }}
+            .metric-card .value {{
+                font-size: 2.5em;
+                font-weight: bold;
+                color: #2c3e50;
+            }}
+            .metric-card .subtitle {{
+                font-size: 0.85em;
+                color: #7f8c8d;
+                margin-top: 5px;
+            }}
+            table {{ 
+                border-collapse: collapse; 
+                width: 100%; 
+                margin: 25px 0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }}
+            th, td {{ 
+                border: 1px solid #e0e0e0; 
+                padding: 14px; 
+                text-align: left; 
+            }}
+            th {{ 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.9em;
+                letter-spacing: 0.5px;
+            }}
+            tr:nth-child(even) {{ background-color: #f8f9fa; }}
+            tr:hover {{ background-color: #e3f2fd; transition: background-color 0.3s; }}
+            .log-section {{
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid #667eea;
+            }}
+            .log-item {{ 
+                padding: 10px; 
+                margin: 8px 0;
+                border-bottom: 1px solid #ecf0f1;
+                padding-left: 25px;
+                position: relative;
+            }}
+            .log-item:before {{
+                content: "→";
+                position: absolute;
+                left: 5px;
+                color: #667eea;
+                font-weight: bold;
+            }}
+            .chart-section {{
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+            }}
+            .progress-bar {{
+                width: 100%;
+                height: 30px;
+                background: #e9ecef;
+                border-radius: 15px;
+                overflow: hidden;
+                margin: 10px 0;
+            }}
+            .progress-fill {{
+                height: 100%;
+                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                transition: width 0.3s ease;
+            }}
+            .alert {{
+                padding: 15px;
+                border-radius: 8px;
+                margin: 15px 0;
+            }}
+            .alert-info {{
+                background: #e3f2fd;
+                border-left: 4px solid #2196f3;
+                color: #1565c0;
+            }}
+            .alert-success {{
+                background: #e8f5e9;
+                border-left: 4px solid #4caf50;
+                color: #2e7d32;
+            }}
+            .alert-warning {{
+                background: #fff3e0;
+                border-left: 4px solid #ff9800;
+                color: #e65100;
+            }}
+            .statistics-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 15px;
+                margin: 20px 0;
+            }}
+            .stat-item {{
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                border-left: 3px solid #667eea;
+            }}
+            .stat-label {{
+                color: #7f8c8d;
+                font-size: 0.85em;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }}
+            .stat-value {{
+                color: #2c3e50;
+                font-size: 1.5em;
+                font-weight: bold;
+                margin-top: 5px;
+            }}
+            .footer {{
+                margin-top: 50px;
+                padding-top: 20px;
+                border-top: 2px solid #ecf0f1;
+                text-align: center;
+                color: #7f8c8d;
+                font-size: 0.9em;
+            }}
+            .page-break {{
+                page-break-after: always;
+            }}
+            @media print {{
+                body {{ background: white; padding: 0; }}
+                .container {{ box-shadow: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>📊 Survey Data Analysis Report</h1>
+                <p class="timestamp">Generated: {datetime.now().strftime('%B %d, %Y at %H:%M:%S')}</p>
+            </div>
+            
+            <!-- Executive Summary -->
+            <h2>📋 Executive Summary</h2>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <h3>Total Responses</h3>
+                    <div class="value">{original_rows}</div>
+                    <div class="subtitle">Initial survey responses</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Valid Responses</h3>
+                    <div class="value">{final_rows}</div>
+                    <div class="subtitle">After cleaning & validation</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Retention Rate</h3>
+                    <div class="value">{retention_rate:.1f}%</div>
+                    <div class="subtitle">Data quality indicator</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Total Variables</h3>
+                    <div class="value">{len(df_cleaned.columns)}</div>
+                    <div class="subtitle">Survey questions/fields</div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <strong>📌 Data Quality:</strong> {retention_rate:.1f}% of responses passed quality checks and validation rules.
+                {'Good data quality!' if retention_rate >= 80 else 'Consider reviewing data collection process.' if retention_rate < 60 else 'Acceptable data quality.'}
+            </div>
+            
+            <!-- Data Quality Metrics -->
+            <h2>✅ Data Quality Assessment</h2>
+            
+            <h3>Response Retention</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {retention_rate}%">
+                    {retention_rate:.1f}%
+                </div>
+            </div>
+            
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <h3>Removed (Outliers)</h3>
+                    <div class="value">{context.get('outliers_removed', 0)}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Removed (Validation)</h3>
+                    <div class="value">{context.get('validation_removed', 0)}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Numeric Variables</h3>
+                    <div class="value">{len(numeric_cols)}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Categorical Variables</h3>
+                    <div class="value">{len(categorical_cols)}</div>
+                </div>
+            </div>
+            
+            <!-- Variable Types -->
+            <h2>🏷️ Variable Information</h2>
+            <table>
+                <tr><th>Variable Name</th><th>Type</th><th>Non-Null Count</th><th>Completeness</th></tr>
+    """
+    
+    for col in df_cleaned.columns:
+        non_null = df_cleaned[col].notna().sum()
+        completeness = (non_null / len(df_cleaned) * 100)
+        col_type = context.get('col_types', {}).get(col, 'unknown')
+        
+        html += f"""
+                <tr>
+                    <td>{col}</td>
+                    <td>{col_type}</td>
+                    <td>{non_null}</td>
+                    <td>{completeness:.1f}%</td>
+                </tr>
+        """
+    
+    html += """
+            </table>
+            
+            <!-- Numeric Variable Statistics -->
+    """
+    
+    if numeric_cols:
+        html += """
+            <h2>📈 Numeric Variables - Descriptive Statistics</h2>
+        """
+        
+        for col in numeric_cols[:10]:  # Limit to first 10 numeric columns
+            stats = df_cleaned[col].describe()
+            html += f"""
+            <h3>{col}</h3>
+            <div class="statistics-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Count</div>
+                    <div class="stat-value">{stats['count']:.0f}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Mean</div>
+                    <div class="stat-value">{stats['mean']:.2f}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Median</div>
+                    <div class="stat-value">{stats['50%']:.2f}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Std Dev</div>
+                    <div class="stat-value">{stats['std']:.2f}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Minimum</div>
+                    <div class="stat-value">{stats['min']:.2f}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Maximum</div>
+                    <div class="stat-value">{stats['max']:.2f}</div>
+                </div>
+            </div>
+            """
+    
+    # Categorical Variable Summaries
+    if categorical_cols:
+        html += """
+            <div class="page-break"></div>
+            <h2>📊 Categorical Variables - Frequency Distribution</h2>
+        """
+        
+        for col in categorical_cols[:10]:  # Limit to first 10 categorical columns
+            value_counts = df_cleaned[col].value_counts().head(10)
+            total = len(df_cleaned)
+            
+            html += f"""
+            <h3>{col}</h3>
+            <table>
+                <tr><th>Category</th><th>Count</th><th>Percentage</th></tr>
+            """
+            
+            for value, count in value_counts.items():
+                pct = (count / total * 100)
+                html += f"""
+                <tr>
+                    <td>{value}</td>
+                    <td>{count}</td>
+                    <td>{pct:.1f}%</td>
+                </tr>
+                """
+            
+            html += "</table>"
+    
+    # Missing Data Analysis
+    html += """
+            <div class="page-break"></div>
+            <h2>❓ Missing Data Analysis</h2>
+    """
+    
+    missing_data = df_cleaned.isnull().sum()
+    missing_pct = (missing_data / len(df_cleaned) * 100).round(2)
+    
+    if missing_data.sum() > 0:
+        html += """
+            <table>
+                <tr><th>Variable</th><th>Missing Count</th><th>Missing %</th><th>Status</th></tr>
+        """
+        
+        for col in df_cleaned.columns:
+            if missing_data[col] > 0:
+                status = "⚠️ High" if missing_pct[col] > 10 else "✓ Low"
+                html += f"""
+                <tr>
+                    <td>{col}</td>
+                    <td>{missing_data[col]}</td>
+                    <td>{missing_pct[col]:.2f}%</td>
+                    <td>{status}</td>
+                </tr>
+                """
+        
+        html += "</table>"
+    else:
+        html += '<div class="alert alert-success"><strong>✓ Perfect!</strong> No missing data in the cleaned dataset.</div>'
+    
+    # Data Cleaning Log
+    html += """
+            <div class="page-break"></div>
+            <h2>🧹 Data Cleaning Process</h2>
+            <div class="log-section">
+    """
+    
+    for log_item in context.get('clean_log', []):
+        html += f'<div class="log-item">{log_item}</div>'
+    
+    html += "</div>"
+    
+    # Validation Log
+    if context.get('validation_log'):
+        html += """
+            <h2>✅ Validation Rules Applied</h2>
+            <div class="log-section">
+        """
+        
+        for log_item in context['validation_log']:
+            html += f'<div class="log-item">{log_item}</div>'
+        
+        html += "</div>"
+    
+    # Weighted Estimates
+    if context.get('estimates'):
+        html += """
+            <div class="page-break"></div>
+            <h2>📊 Statistical Estimates</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+        """
+        
+        for key, value in context['estimates'].items():
+            if isinstance(value, (int, float)):
+                html += f"<tr><td>{key}</td><td>{value:.4f}</td></tr>"
+            else:
+                html += f"<tr><td>{key}</td><td>{value}</td></tr>"
+        
+        html += "</table>"
+    
+    # Recommendations
+    html += f"""
+            <div class="page-break"></div>
+            <h2>💡 Recommendations</h2>
+            <div class="alert alert-info">
+                <h3>Data Quality Recommendations:</h3>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+    """
+    
+    if retention_rate < 70:
+        html += "<li><strong>Low retention rate:</strong> Review data collection process and validation rules.</li>"
+    
+    if missing_data.sum() > len(df_cleaned) * 0.1:
+        html += "<li><strong>High missing data:</strong> Consider making certain fields mandatory or improving data entry.</li>"
+    
+    if context.get('outliers_removed', 0) > original_rows * 0.1:
+        html += "<li><strong>Many outliers detected:</strong> Review if outlier removal criteria are appropriate.</li>"
+    
+    html += """
+                    <li>✓ Continue monitoring data quality metrics regularly.</li>
+                    <li>✓ Document any changes to validation rules for transparency.</li>
+                </ul>
+            </div>
+            
+            <!-- Footer -->
+            <div class="footer">
+                <p><strong>Survey Data Analysis Report</strong></p>
+                <p>Generated by Smart Survey Data Cleaner</p>
+                <p>Powered by Python, Streamlit & Advanced Analytics</p>
+                <p style="margin-top: 10px;">© {datetime.now().year} - All Rights Reserved</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html
+
+
+# ==================== ADD THIS SECTION TO YOUR MAIN APP ====================
+# Add this after the visualizations section in your main code
+
+if 'validated' in st.session_state:
+    validated = st.session_state['validated']
+    
+    # Report Generation Section
+    st.markdown("---")
+    st.subheader("📄 " + t("generate_report", lang))
+    
+    report_cols = st.columns([2, 1])
+    
+    with report_cols[0]:
+        st.markdown("""
+        Generate a comprehensive survey analysis report including:
+        - Executive summary with key metrics
+        - Data quality assessment
+        - Variable statistics and distributions
+        - Missing data analysis
+        - Cleaning and validation logs
+        - Actionable recommendations
+        """)
+    
+    with report_cols[1]:
+        if st.button("📊 " + t("create_report", lang), type="primary", use_container_width=True):
+            with st.spinner('🔄 Generating comprehensive report...'):
+                # Prepare context
+                report_context = {
+                    'original_rows': st.session_state.get('original_shape', (0,0))[0],
+                    'cleaned_rows': len(validated),
+                    'outliers_removed': len(st.session_state.get('outliers', pd.DataFrame())),
+                    'validation_removed': len(st.session_state.get('removed_by_rule', pd.DataFrame())),
+                    'clean_log': st.session_state.get('clean_log', []),
+                    'validation_log': st.session_state.get('validation_log', []),
+                    'col_types': st.session_state.get('col_types', {}),
+                    'nulls': validated.isnull().mean().mul(100).round(2).to_dict(),
+                    'estimates': st.session_state.get('estimates', {})
+                }
+                
+                # Generate HTML report
+                html_report = generate_comprehensive_survey_report(
+                    report_context, 
+                    validated, 
+                    lang
+                )
+                
+                st.session_state['html_report'] = html_report
+                st.success("✅ Report generated successfully!")
+    
+    # Download button for report
+    if 'html_report' in st.session_state:
+        report_filename = f"survey_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        
+        st.download_button(
+            "📥 " + t("download_html", lang),
+            st.session_state['html_report'],
+            file_name=report_filename,
+            mime="text/html",
+            use_container_width=True
+        )
+        
+        # Preview report
+        with st.expander("👁️ Preview Report"):
+            st.components.v1.html(st.session_state['html_report'], height=600, scrolling=True)
